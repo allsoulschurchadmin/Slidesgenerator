@@ -160,6 +160,11 @@ dialog::backdrop{background:rgba(0,0,0,.45)}
         </div>
         <p class="hint">Your master shows only the reference for each reading, so only the reference is replaced.</p>
         <div class="field" style="margin-top:14px"><label for="collect">Collect of the Day</label><textarea id="collect" rows="5"></textarea></div>
+        <div class="grid2" style="margin-top:14px">
+          <div class="field"><label for="acclCel">Acclamation: Celebrant says</label><input id="acclCel" type="text"></div>
+          <div class="field"><label for="acclPeople">Acclamation: People answer (blue)</label><input id="acclPeople" type="text"></div>
+        </div>
+        <p class="hint">Read from the bulletin. If the bulletin has none, the usual “Blessed be God…” stays.</p>
       </section>
 
       <section class="panel">
@@ -280,6 +285,9 @@ function parseLiturgy(lines){
 
   m=/THE COLLECT OF THE DAY.*?Let us pray\.?\s*(.+?)\s*People:?\s*Amen/i.exec(f);
   out.collect=m?cleanText(m[1]):''; if(!m) out.warnings.push('Collect of the Day not found');
+
+  m=/THE ACCLAMATION\s*(?:BCP\s*p\.?\s*\d+)?\s*Celebrant:?\s*(.+?)\s*People:?\s*(.+?)\s*THE COLLECT FOR PURITY/i.exec(f);
+  out.acclCel=m?cleanText(m[1]):''; out.acclPeople=m?cleanText(m[2]):''; if(!m) out.warnings.push('Acclamation not found – using the usual one');
 
   m=/THE SERMON\s+(.+?)\s+THE NICENE/i.exec(f);
   out.preacherRaw=m?cleanText(m[1]):''; if(!m) out.warnings.push('Preacher not found');
@@ -494,6 +502,7 @@ function maybeShowReview(){
   $('preacher').value=pre;
   $('preacherHint').textContent = L.preacherRaw && L.preacherRaw!==pre ? 'The bulletin says “'+L.preacherRaw+'”.' : '';
   ['firstLesson','secondLesson','gospel','gospelWriter','collect'].forEach(k=>$(k).value=L[k]||'');
+  $('acclCel').value=L.acclCel||ACCL_DEFAULT[0]; $('acclPeople').value=L.acclPeople||ACCL_DEFAULT[1];
   $('psalmTitle').value=L.psalmTitle||'';
   state.verses=L.psalmVerses.map(v=>({n:v.n,text:v.text}));
   renderVerses();
@@ -730,6 +739,7 @@ People: «Amen.»`],
 Celebrant: Go in peace, to love and serve the Lord.
 People: «Thanks be to God. Alleluia! Alleluia!»`]
 ];
+const ACCL_DEFAULT=['Blessed be God, the Father, the Son and the Holy Spirit.','And blessed be his kingdom, now and forever. Amen.'];
 const FIXMAP={}; FIXED.forEach(x=>FIXMAP[x[0]]=x);
 const ORDER_LABELS={title:'Title slide (cover photo)',processional:'Processional hymn',collect:'Collect of the Day',first:'First Lesson',psalm:'Psalm',second:'Second Lesson',gospel:'The Gospel',homily:'Homily',offertory:'Offertory hymn',consecration:'Prayer of Consecration (photo)',communion:'Communion hymn',recessional:'Recessional hymn',announcements:'Announcements',end:'Closing cover photo'};
 FIXED.forEach(x=>ORDER_LABELS[x[0]]=x[1]);
@@ -765,7 +775,7 @@ function buildPayload(){
     isoDate:iso, dateText:formatDateText(iso),
     firstLesson:$('firstLesson').value.trim(), secondLesson:$('secondLesson').value.trim(),
     gospel:$('gospel').value.trim(), gospelWriter:$('gospelWriter').value.trim(),
-    preacher:$('preacher').value.trim(), collect:$('collect').value.trim(),
+    preacher:$('preacher').value.trim(), acclCel:$('acclCel').value.trim()||ACCL_DEFAULT[0], acclPeople:$('acclPeople').value.trim()||ACCL_DEFAULT[1], collect:$('collect').value.trim(),
     psalm:{title:$('psalmTitle').value.trim(), verses:state.verses.map(v=>({n:v.n,text:v.text.trim()}))},
     announcements:$('announcements').value.split('\n').map(x=>x.trim()).filter(Boolean),
     hymns:{}, settings:settings()
@@ -804,7 +814,7 @@ function buildDeck(){
     s.addText(text,{fontFace:'Arial',fontSize:sz,color:'FFFFFF',fill:{color:'000000'},margin:0,align:'center',valign:'middle',x:c?(10-tw)/2:o.x-pad,y:o.y+((o.h||th)-th)/2,w:tw,h:th}); };
   const cover=()=>{ const s=add(false); s.addImage({data:IMG.cover,x:0,y:0,w:10,h:5.625,sizing:{type:'cover',w:10,h:5.625}});
     onPhoto(s,'All Souls Anglican',52,{x:1.3,y:2.75,w:5.9,h:.95,align:'left'}); onPhoto(s,d.dateText,28,{x:1.85,y:3.62,w:3.9,h:.55,align:'left'}); };
-  const fixed=k=>{ const t=FIXMAP[k][2], m=META[k]||[36,28]; const s=add(); say(s,runs(t,m[1],m[0],m[2]||GR),m[3]==='t'?{valign:'top',y:.3}:{}); };
+  const fixed=k=>{ const t=k==='acclamation'?'#THE ACCLAMATION BCP p. 123\nCelebrant: '+d.acclCel+'\nPeople: «'+d.acclPeople+'»':FIXMAP[k][2], m=META[k]||[36,28]; const s=add(); say(s,runs(t,m[1],m[0],m[2]||GR),m[3]==='t'?{valign:'top',y:.3}:{}); };
   const lsize=n=>n<=5?30:n===6?29:n<=8?26:n===9?25:n===10?23:n<=12?20:17;
   const hymn=slot=>{ const h=d.hymns[slot]; if(!h||(!h.title&&!h.blocks.length)) return;
     const hd={processional:'THE PROCESSIONAL HYMN:',offertory:'The Offertory:',communion:'Communion Hymn:',recessional:'Recessional:'}[slot];
