@@ -773,7 +773,7 @@ function buildPayload(){
   SLOTS.forEach(([slot])=>{ out.hymns[slot]={title:(state.hymnTitles[slot]||'').trim(), blocks:currentBlocks(slot)}; });
   return out;
 }
-const GLORIA='All: Glory be to the Father, and to the Son, and to the Holy Spirit; as it was in the beginning, is now, and Ever shall be, world without end. Amen.';
+const GLORIA='All: Glory be to the Father, and to the Son, and to the Holy Spirit; as it was in the beginning, is now, and ever shall be, world without end. Amen.';
 function chunk(a,n){ const o=[]; for(let i=0;i<a.length;i+=n) o.push(a.slice(i,i+n)); return o; }
 /* Sizes, colors and layout measured from the master PDF. META: id -> [heading size, body size, gray, 't' = top aligned] */
 const META={acclamation:[36,26],purity:[31,31],summary:[27,27],kyrie:[27,27],gloria:[36,22],lordbe:[36,36],gospelproc:[30,26,0,'t'],
